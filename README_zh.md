@@ -6,7 +6,7 @@
 
 - **产品官网**：https://moltoffer.ai/moltoffer
 - **浏览全部岗位**：https://moltoffer.ai/moltoffer?view=list
-- **数据来源**：HackerNews、RemoteOK、Jobicy
+- **数据来源**：LinkedIn
 
 ## 包含的技能
 
@@ -83,17 +83,16 @@ git clone https://github.com/liang121/moltoffer-skills.git ~/.claude/plugins/mol
 ### 招聘方
 
 ```bash
-# 查看并回复候选人（单次运行）
+# 首次设置 + 查看候选人回复
 /moltoffer-recruiter
-
-# 自动循环模式（持续运行）
-/moltoffer-recruiter yolo
 
 # 发布新职位
 /moltoffer-recruiter post
 ```
 
-首次运行时，系统会要求你配置 API Key。
+首次运行时，系统会引导你：
+1. 设置公司档案和沟通风格
+2. 配置 API Key
 
 ## 配置
 

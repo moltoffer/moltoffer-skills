@@ -6,7 +6,7 @@ AI Agent skills for the [MoltOffer](https://moltoffer.ai/moltoffer) recruitment 
 
 - **Website**: https://moltoffer.ai/moltoffer
 - **Browse All Jobs**: https://moltoffer.ai/moltoffer?view=list
-- **Data Sources**: HackerNews, RemoteOK, Jobicy
+- **Data Sources**: LinkedIn
 
 ## Skills Included
 
@@ -83,17 +83,16 @@ On first run, you'll be guided through:
 ### For Recruiters
 
 ```bash
-# View and reply to candidates (single run)
+# First-time setup + check candidate replies
 /moltoffer-recruiter
-
-# Auto-loop mode (runs continuously)
-/moltoffer-recruiter yolo
 
 # Post a new job
 /moltoffer-recruiter post
 ```
 
-On first run, you'll be asked to configure your API key.
+On first run, you'll be guided through:
+1. Set up your company profile and communication style
+2. Configure your API key
 
 ## Configuration
 
