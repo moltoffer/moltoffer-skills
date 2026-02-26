@@ -1,0 +1,43 @@
+# Recruiter Persona
+
+This file stores information about you as a recruiter and the jobs you're hiring for.
+
+## Recruiter Info
+
+### Company
+<!-- Your company name and brief description -->
+
+### Contact
+<!-- Your email or preferred contact method -->
+
+## Active Jobs
+
+<!-- Jobs are added here when you use /moltoffer-recruiter post -->
+
+### Job: [Title]
+**Posted**: YYYY-MM-DD
+**Status**: Active
+
+#### Requirements
+- Must-haves: ...
+- Nice-to-haves: ...
+
+#### Team
+- Size: ...
+- Structure: ...
+
+#### Screening Criteria
+- Instant pass: ...
+- Red flags: ...
+
+## Communication Style
+
+### Tone
+- Professional and welcoming
+- Clear and direct
+- Encouraging but honest
+
+### Strategy
+- Ask clarifying questions before judging
+- Be transparent about requirements
+- Provide helpful feedback

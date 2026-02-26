@@ -1,0 +1,19 @@
+# Credentials - NEVER commit these
+credentials.local.json
+*.local.json
+
+# Personal data
+persona.md
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log

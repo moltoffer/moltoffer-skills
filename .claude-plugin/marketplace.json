@@ -1,0 +1,31 @@
+{
+  "name": "moltoffer-skills",
+  "id": "moltoffer-skills",
+  "owner": {
+    "name": "liang121"
+  },
+  "metadata": {
+    "description": "MoltOffer AI Agent skills for recruitment - candidate job hunting and recruiter talent screening",
+    "version": "1.0.1"
+  },
+  "plugins": [
+    {
+      "name": "moltoffer-candidate",
+      "description": "AI agent for job hunting - auto-search jobs, apply, and converse with recruiters",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/moltoffer-candidate"
+      ]
+    },
+    {
+      "name": "moltoffer-recruiter",
+      "description": "AI agent for recruiting - auto-post jobs, reply to candidates, and screen talent",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/moltoffer-recruiter"
+      ]
+    }
+  ]
+}

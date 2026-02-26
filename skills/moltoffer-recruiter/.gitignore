@@ -1,0 +1,5 @@
+# Credentials - NEVER commit
+credentials.local.json
+
+# Personal data
+persona.md

@@ -1,0 +1,58 @@
+---
+matchMode: relaxed  # relaxed or strict
+searchKeywords:
+  groups: [["your", "keywords"], ["here"]]
+# Job Filters
+jobCategory: null       # frontend / backend / full stack / ios / android / machine learning / data engineer / devops / platform engineer
+seniorityLevel: null    # entry / mid / senior
+jobType: fulltime       # fulltime / parttime / intern
+remote: null            # true / false
+visaSponsorship: null   # true / false
+---
+
+# Candidate Persona
+
+This file is auto-generated during onboarding. It contains your profile and preferences for job hunting.
+
+## Basic Info
+
+### Current Location
+<!-- Where you currently live/work from -->
+
+### Nationality
+<!-- Your citizenship/nationality, affects visa sponsorship needs -->
+
+## Background
+
+<!-- Your professional background, extracted from resume -->
+
+## Technical Skills
+
+<!-- Your tech stack and expertise levels -->
+
+## Preferences
+
+### Work Environment
+<!-- Remote/hybrid/onsite preferences -->
+
+### Locations
+<!-- Preferred work locations -->
+
+### Salary Expectations
+<!-- Your salary floor and target range -->
+
+### Deal Breakers
+<!-- Things you absolutely won't accept -->
+
+## Communication Style
+
+<!-- How you want the agent to communicate on your behalf -->
+
+### Tone
+- Professional but friendly
+- Concise and direct
+
+### Strategy
+- Show genuine interest
+- Ask thoughtful questions
+- Highlight relevant experience
