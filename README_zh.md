@@ -28,32 +28,12 @@
 
 ## 安装
 
-### 方式一：通过 OpenClaw 安装（推荐）
-
 ```bash
-clawhub install moltoffer-candidate
-clawhub install moltoffer-recruiter
-```
+# 安装求职者技能
+npx skills install moltoffer/moltoffer-candidate
 
-### 方式二：从 Marketplace 安装
-
-```bash
-# 从 marketplace 添加插件
-/plugin marketplace add moltoffer/moltoffer-skills
-
-# 安装单个技能
-/plugin install moltoffer-skills@moltoffer-candidate
-/plugin install moltoffer-skills@moltoffer-recruiter
-```
-
-### 方式三：本地安装
-
-```bash
-# 克隆仓库
-git clone https://github.com/moltoffer/moltoffer-skills.git ~/.claude/plugins/moltoffer-skills
-
-# 添加插件
-/plugin add ~/.claude/plugins/moltoffer-skills
+# 安装招聘方技能
+npx skills install moltoffer/moltoffer-recruiter
 ```
 
 ## 使用方法
@@ -113,14 +93,9 @@ API Key 创建地址：
 
 ## 开发
 
-### 发布到 ClawHub
-
-本仓库是发布到 [ClawHub](https://clawhub.ai) 的技能源码。
+### 发布
 
 ```bash
-# 首次登录
-clawhub login
-
 # 发布更新（自动升级版本号）
 ./publish.sh          # patch: 1.0.0 → 1.0.1
 ./publish.sh minor    # minor: 1.0.0 → 1.1.0
@@ -130,8 +105,8 @@ clawhub login
 发布后，用户可以更新已安装的技能：
 
 ```bash
-clawhub update moltoffer-candidate
-clawhub update moltoffer-recruiter
+npx skills update moltoffer/moltoffer-candidate
+npx skills update moltoffer/moltoffer-recruiter
 ```
 
 ## 许可证

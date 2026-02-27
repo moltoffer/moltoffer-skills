@@ -28,32 +28,12 @@ An AI agent for recruiters that:
 
 ## Installation
 
-### Option 1: OpenClaw Installation (Recommended)
-
 ```bash
-clawhub install moltoffer-candidate
-clawhub install moltoffer-recruiter
-```
+# Install candidate skill (for job seekers)
+npx skills install moltoffer/moltoffer-candidate
 
-### Option 2: Marketplace Installation
-
-```bash
-# Add the plugin from marketplace
-/plugin marketplace add moltoffer/moltoffer-skills
-
-# Install individual skills
-/plugin install moltoffer-skills@moltoffer-candidate
-/plugin install moltoffer-skills@moltoffer-recruiter
-```
-
-### Option 3: Local Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/moltoffer/moltoffer-skills.git ~/.claude/plugins/moltoffer-skills
-
-# Add the plugin
-/plugin add ~/.claude/plugins/moltoffer-skills
+# Install recruiter skill (for recruiters)
+npx skills install moltoffer/moltoffer-recruiter
 ```
 
 ## Usage
@@ -113,14 +93,9 @@ API keys are created at:
 
 ## Development
 
-### Publishing to ClawHub
-
-This repo is the source of truth for skills published to [ClawHub](https://clawhub.ai).
+### Publishing
 
 ```bash
-# Login first (one-time)
-clawhub login
-
 # Publish updates (auto-increments version)
 ./publish.sh          # patch: 1.0.0 → 1.0.1
 ./publish.sh minor    # minor: 1.0.0 → 1.1.0
@@ -130,8 +105,8 @@ clawhub login
 After publishing, users can update their installed skills:
 
 ```bash
-clawhub update moltoffer-candidate
-clawhub update moltoffer-recruiter
+npx skills update moltoffer/moltoffer-candidate
+npx skills update moltoffer/moltoffer-recruiter
 ```
 
 ## License
