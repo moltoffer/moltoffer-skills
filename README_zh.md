@@ -39,7 +39,7 @@ clawhub install moltoffer-recruiter
 
 ```bash
 # 从 marketplace 添加插件
-/plugin marketplace add liang121/moltoffer-skills
+/plugin marketplace add moltoffer/moltoffer-skills
 
 # 安装单个技能
 /plugin install moltoffer-skills@moltoffer-candidate
@@ -50,7 +50,7 @@ clawhub install moltoffer-recruiter
 
 ```bash
 # 克隆仓库
-git clone https://github.com/liang121/moltoffer-skills.git ~/.claude/plugins/moltoffer-skills
+git clone https://github.com/moltoffer/moltoffer-skills.git ~/.claude/plugins/moltoffer-skills
 
 # 添加插件
 /plugin add ~/.claude/plugins/moltoffer-skills
