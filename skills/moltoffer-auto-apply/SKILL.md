@@ -1,56 +1,59 @@
 ---
 name: moltoffer-auto-apply
-description: "LinkedIn Easy Apply automation. Auto-fill and submit applications using Playwright Python script. Works with moltoffer-candidate job matches."
+description: "LinkedIn Easy Apply automation. Auto-fill and submit applications using Playwright Node.js script. Works with moltoffer-candidate job matches."
 emoji: 🚀
 user-invocable: true
 metadata:
   openclaw:
     requires:
-      bins: ["python3"]
+      bins: ["node"]
       env: ["ANTHROPIC_API_KEY"]
     primaryEnv: ANTHROPIC_API_KEY
 ---
 
 # MoltOffer Auto-Apply Skill
 
-Automate LinkedIn Easy Apply submissions using a dedicated Python script with Playwright. This skill reads job matches from moltoffer-candidate and automatically fills and submits applications.
+Automate LinkedIn Easy Apply submissions using a dedicated Node.js script with Playwright. This skill reads job matches from moltoffer-candidate and automatically fills and submits applications.
 
 **Token-Efficient Design**: The script handles 90% of browser operations without AI. Claude is only called when encountering new form questions not in knowledge.json.
 
 ## Prerequisites
 
 - **moltoffer-candidate** skill must be set up (for persona.md and job matching)
-- **Python 3.8+** installed
+- **Node.js 18+** installed (required by npx/skills)
 - **ANTHROPIC_API_KEY** environment variable set
 - User must be **logged into LinkedIn** in the browser
 
 ## Setup
 
 ```bash
-# Install dependencies
+# Install dependencies (also installs Chromium)
 cd skills/moltoffer-auto-apply/scripts
-pip install -r requirements.txt
-playwright install chromium
+npm install
 ```
 
 ## Commands
 
-### Python Script (Recommended - Token Efficient)
+### Node.js Script (Recommended - Token Efficient)
 
 ```bash
 cd skills/moltoffer-auto-apply/scripts
 
 # Apply with confirmation per job
-python auto_apply.py
+node auto_apply.js
 
 # YOLO mode: Apply without confirmation
-python auto_apply.py --yolo
+node auto_apply.js --yolo
 
 # Limit to N jobs
-python auto_apply.py --limit 5
+node auto_apply.js --limit 5
 
 # YOLO mode with limit
-python auto_apply.py --yolo --limit 10
+node auto_apply.js --yolo --limit 10
+
+# Or use npm scripts
+npm run apply
+npm run yolo
 ```
 
 ### Skill Commands
@@ -132,10 +135,9 @@ This skill **depends on** moltoffer-candidate:
 # 1. Ensure moltoffer-candidate is set up
 /moltoffer-candidate kickoff
 
-# 2. Install Python dependencies
+# 2. Install Node.js dependencies (also installs Chromium)
 cd skills/moltoffer-auto-apply/scripts
-pip install -r requirements.txt
-playwright install chromium
+npm install
 
 # 3. Set API key (for new question inference)
 export ANTHROPIC_API_KEY="your-key"
@@ -151,8 +153,8 @@ See [references/onboarding.md](references/onboarding.md) for setup details.
 
 # 2. Run auto-apply script
 cd skills/moltoffer-auto-apply/scripts
-python auto_apply.py           # with confirmation
-python auto_apply.py --yolo    # without confirmation
+node auto_apply.js           # with confirmation
+node auto_apply.js --yolo    # without confirmation
 ```
 
 ### Reference Docs

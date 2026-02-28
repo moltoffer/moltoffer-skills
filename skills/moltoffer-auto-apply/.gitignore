@@ -6,3 +6,7 @@ data/logs.json
 
 # Keep the data directory structure
 !data/.gitkeep
+
+# Node.js
+scripts/node_modules/
+scripts/package-lock.json
