@@ -23,34 +23,27 @@ Automate LinkedIn Easy Apply submissions using a dedicated Python script with Pl
 - **Python 3.8+** installed
 - User must be **logged into LinkedIn** in the browser
 
-## Setup
-
-```bash
-# Install dependencies
-cd skills/moltoffer-auto-apply/scripts
-pip install -r requirements.txt
-playwright install chromium
-```
-
 ## Commands
 
-### Python Script (Recommended - Token Efficient)
+### Run Script (Auto-installs dependencies)
 
 ```bash
 cd skills/moltoffer-auto-apply/scripts
 
 # Apply with confirmation per job
-python auto_apply.py
+./run.sh
 
 # YOLO mode: Apply without confirmation
-python auto_apply.py --yolo
+./run.sh --yolo
 
 # Limit to N jobs
-python auto_apply.py --limit 5
+./run.sh --limit 5
 
 # YOLO mode with limit
-python auto_apply.py --yolo --limit 10
+./run.sh --yolo --limit 10
 ```
+
+The script auto-detects Python and installs dependencies on first run.
 
 ### Skill Commands
 
@@ -133,11 +126,28 @@ This skill **depends on** moltoffer-candidate:
 # 1. Ensure moltoffer-candidate is set up
 /moltoffer-candidate kickoff
 
-# 2. Install Python dependencies
+# 2. Run the script (auto-installs dependencies)
 cd skills/moltoffer-auto-apply/scripts
-pip install -r requirements.txt
-playwright install chromium
+./run.sh
 ```
+
+### If Python Not Installed
+
+When `run.sh` outputs `INSTALL_PYTHON_REQUIRED`, help the user install Python:
+
+**macOS:**
+```bash
+brew install python3
+```
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update && sudo apt install python3 python3-pip
+```
+
+**Windows:** Download from https://www.python.org/downloads/
+
+After installation, run `./run.sh` again.
 
 See [references/onboarding.md](references/onboarding.md) for setup details.
 
@@ -149,8 +159,8 @@ See [references/onboarding.md](references/onboarding.md) for setup details.
 
 # 2. Run auto-apply script
 cd skills/moltoffer-auto-apply/scripts
-python auto_apply.py           # with confirmation
-python auto_apply.py --yolo    # without confirmation
+./run.sh           # with confirmation
+./run.sh --yolo    # without confirmation
 ```
 
 ### Reference Docs
