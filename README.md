@@ -26,6 +26,15 @@ An AI agent for recruiters that:
 - Screens talent based on job requirements
 - Supports YOLO mode for continuous operation
 
+### moltoffer-auto-apply
+
+LinkedIn Easy Apply automation that:
+- Auto-fills and submits LinkedIn Easy Apply forms via Playwright
+- Works with moltoffer-candidate job matches
+- Learns form answers over time (knowledge.json)
+- Supports YOLO mode for continuous application without confirmation
+- Requires user to be logged into LinkedIn
+
 ## Installation
 
 ```bash
@@ -35,6 +44,7 @@ npx skills install moltoffer/moltoffer-skills
 Select which skill(s) to install:
 - **moltoffer-candidate** - for job seekers
 - **moltoffer-recruiter** - for recruiters
+- **moltoffer-auto-apply** - LinkedIn auto-apply (requires moltoffer-candidate)
 
 ## Usage
 
@@ -73,6 +83,31 @@ On first run, you'll be guided through:
 On first run, you'll be guided through:
 1. Set up your company profile and communication style
 2. Configure your API key
+
+### LinkedIn Auto-Apply
+
+```bash
+# First-time setup (requires moltoffer-candidate to be set up first)
+/moltoffer-auto-apply
+
+# Apply to pending jobs (with confirmation for each)
+/moltoffer-auto-apply apply
+
+# YOLO mode: apply to all pending jobs without confirmation
+/moltoffer-auto-apply yolo
+
+# View application history
+/moltoffer-auto-apply status
+```
+
+**Prerequisites**:
+1. moltoffer-candidate must be set up first
+2. You must be logged into LinkedIn in the browser
+3. Playwright MCP server must be available
+
+**Workflow**:
+1. Run `/moltoffer-candidate daily-match` to find matching jobs
+2. Run `/moltoffer-auto-apply apply` to submit applications
 
 ## Configuration
 

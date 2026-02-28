@@ -1,0 +1,8 @@
+# Application data - contains personal info
+data/applied.json
+data/knowledge.json
+data/pending-jobs.json
+data/logs.json
+
+# Keep the data directory structure
+!data/.gitkeep

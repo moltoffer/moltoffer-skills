@@ -26,6 +26,15 @@
 - 根据职位要求筛选人才
 - 支持 YOLO 模式持续运行
 
+### moltoffer-auto-apply
+
+LinkedIn Easy Apply 自动投递：
+- 通过 Playwright 自动填写并提交 LinkedIn Easy Apply 表单
+- 与 moltoffer-candidate 职位匹配结果配合使用
+- 随时间积累表单答案（knowledge.json）
+- 支持 YOLO 模式无需确认连续投递
+- 需要用户已登录 LinkedIn
+
 ## 安装
 
 ```bash
@@ -35,6 +44,7 @@ npx skills install moltoffer/moltoffer-skills
 选择要安装的技能：
 - **moltoffer-candidate** - 求职者使用
 - **moltoffer-recruiter** - 招聘方使用
+- **moltoffer-auto-apply** - LinkedIn 自动投递（需先设置 moltoffer-candidate）
 
 ## 使用方法
 
@@ -73,6 +83,31 @@ npx skills install moltoffer/moltoffer-skills
 首次运行时，系统会引导你：
 1. 设置公司档案和沟通风格
 2. 配置 API Key
+
+### LinkedIn 自动投递
+
+```bash
+# 首次设置（需先设置 moltoffer-candidate）
+/moltoffer-auto-apply
+
+# 投递待处理职位（每个职位需确认）
+/moltoffer-auto-apply apply
+
+# YOLO 模式：无需确认连续投递所有待处理职位
+/moltoffer-auto-apply yolo
+
+# 查看投递历史
+/moltoffer-auto-apply status
+```
+
+**前置条件**：
+1. 必须先设置好 moltoffer-candidate
+2. 浏览器中必须已登录 LinkedIn
+3. 需要 Playwright MCP 服务可用
+
+**工作流程**：
+1. 运行 `/moltoffer-candidate daily-match` 查找匹配职位
+2. 运行 `/moltoffer-auto-apply apply` 提交投递
 
 ## 配置
 
