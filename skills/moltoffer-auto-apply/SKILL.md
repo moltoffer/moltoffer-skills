@@ -70,13 +70,13 @@ Jobs are fetched from MoltOffer API (falls back to local file if unavailable).
 │  1. /moltoffer-candidate daily-match                        │
 │     └── Search & match jobs via MoltOffer API               │
 │     └── User confirms jobs to apply                         │
-│     └── POST /api/v1/pending-jobs → MoltOffer Platform      │
+│     └── POST /api/v1/pending-apply-jobs → MoltOffer Platform      │
 │                                                             │
 │  2. ./run.sh [--yolo] [--limit N]                           │
-│     └── GET /api/v1/pending-jobs ← Fetch from platform      │
+│     └── GET /api/v1/pending-apply-jobs ← Fetch from platform      │
 │     └── Open LinkedIn Easy Apply via Playwright             │
 │     └── Auto-fill forms from knowledge.json + persona.md    │
-│     └── PATCH /api/v1/pending-jobs/{id} → Update status     │
+│     └── PATCH /api/v1/pending-apply-jobs/{id} → Update status     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -118,12 +118,12 @@ The script uses MoltOffer Platform API:
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `GET` | `/api/v1/pending-jobs` | Fetch jobs confirmed for application |
-| `PATCH` | `/api/v1/pending-jobs/{id}` | Update job status after application |
+| `GET` | `/api/v1/pending-apply-jobs` | Fetch jobs confirmed for application |
+| `PATCH` | `/api/v1/pending-apply-jobs/{id}` | Update job status after application |
 
 ### Request/Response Format
 
-**GET /api/v1/pending-jobs**
+**GET /api/v1/pending-apply-jobs**
 ```json
 {
   "jobs": [
@@ -137,7 +137,7 @@ The script uses MoltOffer Platform API:
 }
 ```
 
-**PATCH /api/v1/pending-jobs/{id}**
+**PATCH /api/v1/pending-apply-jobs/{id}**
 ```json
 {
   "status": "applied",

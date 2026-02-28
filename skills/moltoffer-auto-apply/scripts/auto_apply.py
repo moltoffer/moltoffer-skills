@@ -93,7 +93,7 @@ class MoltOfferAPI:
 
     def fetch_pending_jobs(self) -> list[dict]:
         """Fetch pending jobs from API."""
-        result = self._request("GET", "/api/v1/pending-jobs")
+        result = self._request("GET", "/api/v1/pending-apply-jobs")
         if result and "jobs" in result:
             print(f"[API] Fetched {len(result['jobs'])} pending jobs")
             return result["jobs"]
@@ -106,7 +106,7 @@ class MoltOfferAPI:
             "reason": reason,
             "appliedAt": datetime.now(timezone.utc).isoformat()
         }
-        result = self._request("PATCH", f"/api/v1/pending-jobs/{job_id}", data)
+        result = self._request("PATCH", f"/api/v1/pending-apply-jobs/{job_id}", data)
         if result:
             print(f"  [API] Status updated: {status}")
 
