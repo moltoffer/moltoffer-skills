@@ -3,7 +3,7 @@
 LinkedIn Easy Apply Automation Script
 
 This script automates LinkedIn Easy Apply using Playwright.
-Unknown questions are logged and the job is marked for human review.
+Fetches pending jobs from MoltOffer API and updates status after each application.
 
 Usage:
     python auto_apply.py [--yolo] [--limit N]
@@ -21,6 +21,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError, URLError
 
 import yaml
 from playwright.sync_api import Page, sync_playwright, TimeoutError as PlaywrightTimeout
@@ -38,6 +40,75 @@ PENDING_FILE = DATA_DIR / "pending-jobs.json"
 LOGS_FILE = DATA_DIR / "logs.json"
 PERSONA_FILE = CANDIDATE_DIR / "persona.md"
 CREDENTIALS_FILE = CANDIDATE_DIR / "credentials.local.json"
+
+# API
+API_BASE_URL = "https://api.moltoffer.com"
+
+
+class MoltOfferAPI:
+    """MoltOffer Platform API client for pending jobs."""
+
+    def __init__(self):
+        self.api_key = None
+        self.base_url = API_BASE_URL
+        self._load_credentials()
+
+    def _load_credentials(self):
+        """Load API key from credentials file."""
+        if not CREDENTIALS_FILE.exists():
+            print("[WARN] credentials.local.json not found, API disabled")
+            return
+
+        try:
+            creds = json.loads(CREDENTIALS_FILE.read_text())
+            self.api_key = creds.get("apiKey") or creds.get("api_key")
+        except Exception as e:
+            print(f"[WARN] Failed to load credentials: {e}")
+
+    def _request(self, method: str, endpoint: str, data: dict = None) -> Optional[dict]:
+        """Make API request."""
+        if not self.api_key:
+            return None
+
+        url = f"{self.base_url}{endpoint}"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json"
+        }
+
+        try:
+            body = json.dumps(data).encode() if data else None
+            req = Request(url, data=body, headers=headers, method=method)
+            with urlopen(req, timeout=10) as resp:
+                return json.loads(resp.read().decode())
+        except HTTPError as e:
+            print(f"  [API ERROR] {e.code}: {e.reason}")
+            return None
+        except URLError as e:
+            print(f"  [API ERROR] {e.reason}")
+            return None
+        except Exception as e:
+            print(f"  [API ERROR] {e}")
+            return None
+
+    def fetch_pending_jobs(self) -> list[dict]:
+        """Fetch pending jobs from API."""
+        result = self._request("GET", "/api/v1/pending-jobs")
+        if result and "jobs" in result:
+            print(f"[API] Fetched {len(result['jobs'])} pending jobs")
+            return result["jobs"]
+        return []
+
+    def update_job_status(self, job_id: str, status: str, reason: str = ""):
+        """Update job application status on API."""
+        data = {
+            "status": status,
+            "reason": reason,
+            "appliedAt": datetime.now(timezone.utc).isoformat()
+        }
+        result = self._request("PATCH", f"/api/v1/pending-jobs/{job_id}", data)
+        if result:
+            print(f"  [API] Status updated: {status}")
 
 
 class KnowledgeBase:
@@ -407,6 +478,7 @@ def main():
     parser = argparse.ArgumentParser(description="LinkedIn Easy Apply Automation")
     parser.add_argument("--yolo", action="store_true", help="Apply without confirmation")
     parser.add_argument("--limit", type=int, default=0, help="Max jobs to apply")
+    parser.add_argument("--local", action="store_true", help="Use local file instead of API")
     args = parser.parse_args()
 
     print("="*50)
@@ -424,10 +496,25 @@ def main():
         print("Please run /moltoffer-candidate kickoff first.")
         sys.exit(1)
 
-    # Load pending jobs
-    jobs = load_pending_jobs()
+    # Initialize API client
+    api = MoltOfferAPI()
+    use_api = api.api_key is not None and not args.local
+
+    # Load pending jobs (API first, fallback to local)
+    jobs = []
+    if use_api:
+        print("\n[INFO] Fetching jobs from MoltOffer API...")
+        jobs = api.fetch_pending_jobs()
+
     if not jobs:
-        print("\n[INFO] No pending jobs. Run /moltoffer-candidate daily-match first.")
+        print("[INFO] Trying local pending-jobs.json...")
+        jobs = load_pending_jobs()
+        use_api = False  # Fallback to local mode
+
+    if not jobs:
+        print("\n[INFO] No pending jobs found.")
+        print("  - Run /moltoffer-candidate daily-match to get matched jobs")
+        print("  - Or confirm jobs to apply via MoltOffer platform")
         sys.exit(0)
 
     if args.limit > 0:
@@ -473,8 +560,12 @@ def main():
             status, reason = applier.apply_to_job(job)
             logger.log_result(job, status, reason)
 
-            if status == "applied":
-                remove_from_pending(job.get("jobId", ""))
+            # Update status
+            job_id = job.get("jobId", "")
+            if use_api and job_id:
+                api.update_job_status(job_id, status, reason)
+            elif job_id:
+                remove_from_pending(job_id)
 
             print(f"  Result: {status} - {reason}")
 

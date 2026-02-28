@@ -30,7 +30,7 @@ Automate LinkedIn Easy Apply submissions using a dedicated Python script with Pl
 ```bash
 cd skills/moltoffer-auto-apply/scripts
 
-# Apply with confirmation per job
+# Apply with confirmation per job (fetches from API)
 ./run.sh
 
 # YOLO mode: Apply without confirmation
@@ -41,9 +41,13 @@ cd skills/moltoffer-auto-apply/scripts
 
 # YOLO mode with limit
 ./run.sh --yolo --limit 10
+
+# Use local pending-jobs.json instead of API
+./run.sh --local
 ```
 
 The script auto-detects Python and installs dependencies on first run.
+Jobs are fetched from MoltOffer API (falls back to local file if unavailable).
 
 ### Skill Commands
 
@@ -65,48 +69,92 @@ The script auto-detects Python and installs dependencies on first run.
 │                                                             │
 │  1. /moltoffer-candidate daily-match                        │
 │     └── Search & match jobs via MoltOffer API               │
-│     └── Generate match report (with LinkedIn URLs)          │
-│     └── Save to data/pending-jobs.json                      │
+│     └── User confirms jobs to apply                         │
+│     └── POST /api/v1/pending-jobs → MoltOffer Platform      │
 │                                                             │
-│  2. python auto_apply.py [--yolo] [--limit N]               │
-│     └── Read pending-jobs.json                              │
+│  2. ./run.sh [--yolo] [--limit N]                           │
+│     └── GET /api/v1/pending-jobs ← Fetch from platform      │
 │     └── Open LinkedIn Easy Apply via Playwright             │
 │     └── Auto-fill forms from knowledge.json + persona.md    │
-│     └── Unknown questions → needs-human-review              │
-│     └── Save results to applied.json                        │
+│     └── PATCH /api/v1/pending-jobs/{id} → Update status     │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
+```
+
+### Data Flow
+
+```
+┌──────────────┐  POST jobs   ┌──────────────┐  GET jobs   ┌──────────────┐
+│ moltoffer-   │ ───────────→ │   MoltOffer  │ ←────────── │ moltoffer-   │
+│ candidate    │              │   Platform   │             │ auto-apply   │
+│ (daily-match)│              │   (API)      │ ←────────── │ (run.sh)     │
+└──────────────┘              └──────────────┘  PATCH status└──────────────┘
 ```
 
 ### How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              No API Required                                 │
+│              API + Local Automation                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Automatic (runs locally):                                  │
-│  • Navigate to job pages                                    │
-│  • Click Easy Apply button                                  │
-│  • Fill fields from knowledge.json + persona.md             │
-│  • Click Next/Submit buttons                                │
-│  • Close modals                                             │
+│  1. Fetch pending jobs from MoltOffer API                   │
+│     (fallback: local pending-jobs.json if API unavailable)  │
 │                                                             │
-│  Unknown Questions:                                         │
-│  • Job marked as needs-human-review                         │
-│  • Questions logged at end of session                       │
-│  • Add answers to knowledge.json, then re-run               │
+│  2. For each job:                                           │
+│     • Navigate to LinkedIn job page                         │
+│     • Click Easy Apply, fill form fields                    │
+│     • Submit application                                    │
+│     • Update status via API (applied/needs-human-review)    │
+│                                                             │
+│  3. Unknown questions logged for knowledge.json             │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Data Files
+## API Endpoints
+
+The script uses MoltOffer Platform API:
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| `GET` | `/api/v1/pending-jobs` | Fetch jobs confirmed for application |
+| `PATCH` | `/api/v1/pending-jobs/{id}` | Update job status after application |
+
+### Request/Response Format
+
+**GET /api/v1/pending-jobs**
+```json
+{
+  "jobs": [
+    {
+      "jobId": "linkedin-12345",
+      "company": "TechCorp",
+      "title": "Software Engineer",
+      "linkedinUrl": "https://linkedin.com/jobs/view/12345"
+    }
+  ]
+}
+```
+
+**PATCH /api/v1/pending-jobs/{id}**
+```json
+{
+  "status": "applied",
+  "reason": "Success",
+  "appliedAt": "2024-01-15T10:30:00Z"
+}
+```
+
+Status values: `applied`, `skipped`, `needs-human-review`, `error`
+
+## Data Files (Local Fallback)
 
 | File | Purpose |
 |------|---------|
 | `data/applied.json` | Application history and session records |
 | `data/knowledge.json` | Pre-filled answers for common form questions |
-| `data/pending-jobs.json` | Queue of jobs to apply to |
+| `data/pending-jobs.json` | Local fallback if API unavailable |
 | `data/logs.json` | Detailed session logs for debugging |
 
 ## Integration with moltoffer-candidate
