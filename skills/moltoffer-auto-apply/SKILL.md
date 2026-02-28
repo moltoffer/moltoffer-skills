@@ -1,59 +1,55 @@
 ---
 name: moltoffer-auto-apply
-description: "LinkedIn Easy Apply automation. Auto-fill and submit applications using Playwright Node.js script. Works with moltoffer-candidate job matches."
+description: "LinkedIn Easy Apply automation. Auto-fill and submit applications using Playwright Python script. Works with moltoffer-candidate job matches."
 emoji: 🚀
 user-invocable: true
 metadata:
   openclaw:
     requires:
-      bins: ["node"]
-      env: ["ANTHROPIC_API_KEY"]
-    primaryEnv: ANTHROPIC_API_KEY
+      bins: ["python3"]
+      env: []
+    primaryEnv: null
 ---
 
 # MoltOffer Auto-Apply Skill
 
-Automate LinkedIn Easy Apply submissions using a dedicated Node.js script with Playwright. This skill reads job matches from moltoffer-candidate and automatically fills and submits applications.
+Automate LinkedIn Easy Apply submissions using a dedicated Python script with Playwright. This skill reads job matches from moltoffer-candidate and automatically fills and submits applications.
 
-**Token-Efficient Design**: The script handles 90% of browser operations without AI. Claude is only called when encountering new form questions not in knowledge.json.
+**No API Required**: The script runs entirely locally. Unknown questions are logged for you to add to `knowledge.json`, then re-run.
 
 ## Prerequisites
 
 - **moltoffer-candidate** skill must be set up (for persona.md and job matching)
-- **Node.js 18+** installed (required by npx/skills)
-- **ANTHROPIC_API_KEY** environment variable set
+- **Python 3.8+** installed
 - User must be **logged into LinkedIn** in the browser
 
 ## Setup
 
 ```bash
-# Install dependencies (also installs Chromium)
+# Install dependencies
 cd skills/moltoffer-auto-apply/scripts
-npm install
+pip install -r requirements.txt
+playwright install chromium
 ```
 
 ## Commands
 
-### Node.js Script (Recommended - Token Efficient)
+### Python Script (Recommended - Token Efficient)
 
 ```bash
 cd skills/moltoffer-auto-apply/scripts
 
 # Apply with confirmation per job
-node auto_apply.js
+python auto_apply.py
 
 # YOLO mode: Apply without confirmation
-node auto_apply.js --yolo
+python auto_apply.py --yolo
 
 # Limit to N jobs
-node auto_apply.js --limit 5
+python auto_apply.py --limit 5
 
 # YOLO mode with limit
-node auto_apply.js --yolo --limit 10
-
-# Or use npm scripts
-npm run apply
-npm run yolo
+python auto_apply.py --yolo --limit 10
 ```
 
 ### Skill Commands
@@ -82,29 +78,31 @@ npm run yolo
 │  2. python auto_apply.py [--yolo] [--limit N]               │
 │     └── Read pending-jobs.json                              │
 │     └── Open LinkedIn Easy Apply via Playwright             │
-│     └── Auto-fill forms (90% local, 10% AI for new Q&A)     │
+│     └── Auto-fill forms from knowledge.json + persona.md    │
+│     └── Unknown questions → needs-human-review              │
 │     └── Save results to applied.json                        │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-### Token Efficiency
+### How It Works
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│              Python Script Approach                          │
+│              No API Required                                 │
 ├─────────────────────────────────────────────────────────────┤
 │                                                             │
-│  Browser Automation (No AI tokens):                         │
+│  Automatic (runs locally):                                  │
 │  • Navigate to job pages                                    │
 │  • Click Easy Apply button                                  │
-│  • Fill known form fields from knowledge.json               │
+│  • Fill fields from knowledge.json + persona.md             │
 │  • Click Next/Submit buttons                                │
 │  • Close modals                                             │
 │                                                             │
-│  AI Called Only When Needed:                                │
-│  • New questions not in knowledge.json                      │
-│  • Answers cached for future use                            │
+│  Unknown Questions:                                         │
+│  • Job marked as needs-human-review                         │
+│  • Questions logged at end of session                       │
+│  • Add answers to knowledge.json, then re-run               │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -135,12 +133,10 @@ This skill **depends on** moltoffer-candidate:
 # 1. Ensure moltoffer-candidate is set up
 /moltoffer-candidate kickoff
 
-# 2. Install Node.js dependencies (also installs Chromium)
+# 2. Install Python dependencies
 cd skills/moltoffer-auto-apply/scripts
-npm install
-
-# 3. Set API key (for new question inference)
-export ANTHROPIC_API_KEY="your-key"
+pip install -r requirements.txt
+playwright install chromium
 ```
 
 See [references/onboarding.md](references/onboarding.md) for setup details.
@@ -153,8 +149,8 @@ See [references/onboarding.md](references/onboarding.md) for setup details.
 
 # 2. Run auto-apply script
 cd skills/moltoffer-auto-apply/scripts
-node auto_apply.js           # with confirmation
-node auto_apply.js --yolo    # without confirmation
+python auto_apply.py           # with confirmation
+python auto_apply.py --yolo    # without confirmation
 ```
 
 ### Reference Docs
@@ -169,17 +165,17 @@ node auto_apply.js --yolo    # without confirmation
 |-------|---------|
 | `KnowledgeBase` | Manages form answers, loads/saves knowledge.json |
 | `PersonaInfo` | Extracts info from persona.md for form filling |
-| `AIAssistant` | Calls Claude API only for unknown questions |
+| `UnknownQuestions` | Tracks questions that need human answers |
 | `ApplicationLogger` | Logs results to applied.json |
 | `LinkedInApplier` | Handles Playwright automation |
 
 ## Core Principles
 
-- **Token-efficient**: AI called only for new questions not in knowledge.json
+- **No API required**: Runs entirely locally, no external calls
 - **Persona-driven**: Form answers derived from moltoffer-candidate persona.md
-- **Knowledge accumulation**: New form questions and answers saved to knowledge.json
+- **Knowledge accumulation**: Add answers to knowledge.json as you encounter new questions
 - **Rate limiting**: 3-5 second delays between applications to avoid detection
-- **Human fallback**: Jobs requiring manual intervention marked as `needs-human-review`
+- **Human fallback**: Jobs with unknown questions marked as `needs-human-review`
 
 ## YOLO Mode
 
@@ -194,7 +190,7 @@ YOLO mode enables continuous application without per-job confirmation:
 1. **Login required**: User must be logged into LinkedIn before running
 2. **Easy Apply only**: Skip jobs that redirect to external sites
 3. **Multi-step forms**: Handle forms with multiple pages (Next → Next → Submit)
-4. **Question inference**: Infer answers from persona when possible
+4. **Unknown questions**: Jobs with new questions marked for review, questions logged for you to add to knowledge.json
 
 ## Security Notes
 
