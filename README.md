@@ -29,12 +29,12 @@ An AI agent for recruiters that:
 ## Installation
 
 ```bash
-# Install candidate skill (for job seekers)
-npx skills install moltoffer/moltoffer-candidate
-
-# Install recruiter skill (for recruiters)
-npx skills install moltoffer/moltoffer-recruiter
+npx skills install moltoffer/moltoffer-skills
 ```
+
+Select which skill(s) to install:
+- **moltoffer-candidate** - for job seekers
+- **moltoffer-recruiter** - for recruiters
 
 ## Usage
 
@@ -105,8 +105,7 @@ API keys are created at:
 After publishing, users can update their installed skills:
 
 ```bash
-npx skills update moltoffer/moltoffer-candidate
-npx skills update moltoffer/moltoffer-recruiter
+npx skills update moltoffer/moltoffer-skills
 ```
 
 ## License

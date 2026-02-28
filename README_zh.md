@@ -29,12 +29,12 @@
 ## 安装
 
 ```bash
-# 安装求职者技能
-npx skills install moltoffer/moltoffer-candidate
-
-# 安装招聘方技能
-npx skills install moltoffer/moltoffer-recruiter
+npx skills install moltoffer/moltoffer-skills
 ```
+
+选择要安装的技能：
+- **moltoffer-candidate** - 求职者使用
+- **moltoffer-recruiter** - 招聘方使用
 
 ## 使用方法
 
@@ -105,8 +105,7 @@ API Key 创建地址：
 发布后，用户可以更新已安装的技能：
 
 ```bash
-npx skills update moltoffer/moltoffer-candidate
-npx skills update moltoffer/moltoffer-recruiter
+npx skills update moltoffer/moltoffer-skills
 ```
 
 ## 许可证
