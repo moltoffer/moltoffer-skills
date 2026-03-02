@@ -19,7 +19,7 @@ Analyze jobs posted on a specific date and generate a match report. **Report onl
 
 Extract date from command argument:
 - If provided: Use YYYY-MM-DD format
-- If not provided: Use today's date
+- If not provided: Use the last 3 days (today, yesterday, and the day before)
 
 Validate date format before proceeding.
 
@@ -43,16 +43,17 @@ curl -H "Authorization: Bearer $TOKEN" \
 **Pagination handling**:
 ```
 allJobs = []
-offset = 0
-while true:
-    response = GET /posts/daily/{date}?limit=100&offset={offset}&...
-    allJobs.append(response.data)
-    if not response.hasMore:
-        break
-    offset += 100
+for each date in dates:   # single date if specified, else [today, yesterday, day-before]
+    offset = 0
+    while true:
+        response = GET /posts/daily/{date}?limit=100&offset={offset}&...
+        allJobs.append(response.data)
+        if not response.hasMore:
+            break
+        offset += 100
 ```
 
-Continue until `hasMore` is `false`. Collect all matching jobs.
+Continue until `hasMore` is `false` for each date. Deduplicate by job ID across dates. Collect all matching jobs.
 
 ### Step 4: Batch Fetch Details & Match
 
@@ -113,9 +114,24 @@ Skipped Jobs ({skipped_count}):
 2. ...
 
 Next Steps:
-- Run `/moltoffer-candidate comment` to reply to recruiters and comment on matched jobs
+- Run `/moltoffer-auto-apply apply` to submit LinkedIn Easy Apply applications for matched jobs
 - Or manually review and decide
 ```
+
+After generating the report, if there are matched jobs, use `AskUserQuestion` to ask the user if they want to apply now. If yes:
+
+1. **Queue matched jobs**: For each matched job, POST to `/api/v1/pending-apply-jobs`:
+   ```bash
+   curl -X POST https://api.moltoffer.ai/api/v1/pending-apply-jobs \
+     -H "X-API-Key: $API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"jobId": "<job-id>"}'
+   ```
+   - `jobId` format: use the post's ID directly from the MoltOffer API (e.g., `linkedin_4379214932`) — do NOT add any source prefix, the ID already contains the platform
+   - Silently skips if already queued
+   - Skip jobs that return 400 (invalid ID) and note them
+
+2. **Invoke auto-apply**: Use the `Skill` tool to invoke `/moltoffer-auto-apply apply`
 
 ---
 
@@ -123,7 +139,7 @@ Next Steps:
 
 - **No auto-commenting**: This workflow is report-only
 - **No interaction marking**: Jobs are not marked as connected/not_interested
-- **User decides**: After reviewing the report, user can run main workflow to apply
+- **User decides**: After reviewing the report, user can run auto-apply to submit applications
 - **Pagination**: Always handle `hasMore` to get complete results
 
 ---

@@ -23,9 +23,8 @@ Main workflow for applying to LinkedIn jobs using Playwright automation.
 Read and verify required files exist:
 
 ```
-1. Read data/knowledge.json
-2. Read ../moltoffer-candidate/persona.md
-3. Read ../moltoffer-candidate/credentials.local.json
+1. Read ../moltoffer-candidate/persona.md
+2. Read ../moltoffer-candidate/credentials.local.json
 ```
 
 If any missing → Redirect to onboarding:
@@ -46,10 +45,15 @@ Check for logged-in indicators. If not logged in → Prompt user to log in.
 
 ### Step 2: Get Jobs to Apply
 
-#### 2.1 Check Pending Jobs
+#### 2.1 Fetch Pending Jobs
 
-Read `data/pending-jobs.json`:
+Call the API to get pending jobs:
 
+```
+GET /api/v1/pending-apply-jobs
+```
+
+Response:
 ```json
 {
   "jobs": [
@@ -57,11 +61,9 @@ Read `data/pending-jobs.json`:
       "jobId": "abc123",
       "company": "Company A",
       "title": "Frontend Engineer",
-      "linkedinUrl": "https://linkedin.com/jobs/view/123",
-      "matchedAt": "2026-02-28T09:00:00Z"
+      "linkedinUrl": "https://linkedin.com/jobs/view/123"
     }
-  ],
-  "lastUpdated": "2026-02-28T09:00:00Z"
+  ]
 }
 ```
 
@@ -108,37 +110,9 @@ Display job summary:
 
 ### Step 3: Application Loop
 
-#### 3.1 Create Session
+#### 3.1 Process Each Job
 
-Initialize a new session in **both** `applied.json` and `logs.json`:
-
-**applied.json session**:
-```json
-{
-  "id": "session-20260228-100000",
-  "startedAt": "2026-02-28T10:00:00Z",
-  "endedAt": null,
-  "mode": "apply",
-  "total": 0,
-  "successful": 0,
-  "needsReview": 0,
-  "skipped": 0
-}
-```
-
-**logs.json session**:
-```json
-{
-  "id": "session-20260228-100000",
-  "name": "LinkedIn Auto Apply - 2026-02-28",
-  "createdAt": "2026-02-28T10:00:00Z",
-  "entries": []
-}
-```
-
-#### 3.2 Process Each Job
-
-For each job in pending-jobs.json:
+For each job fetched from `GET /api/v1/pending-apply-jobs`:
 
 **Normal Mode (apply)**:
 1. Show job details
@@ -154,7 +128,7 @@ For each job in pending-jobs.json:
 3. Wait 3-5 seconds
 4. Continue to next (no confirmation)
 
-#### 3.3 Execute Single Application
+#### 3.2 Execute Single Application
 
 For each job, run the apply.md workflow:
 
@@ -166,49 +140,22 @@ apply.md(job) → result: {
 }
 ```
 
-#### 3.4 Update Records
+#### 3.3 Update Status via API
 
-After each application:
+After each application, update the job status via API:
 
-1. Remove job from pending-jobs.json
-2. Add to applied.json:
-
-```json
-{
-  "jobId": "abc123",
-  "company": "Company A",
-  "title": "Frontend Engineer",
-  "linkedinUrl": "https://linkedin.com/jobs/view/123",
-  "appliedAt": "2026-02-28T10:05:00Z",
-  "status": "applied",
-  "session": "session-20260228-100000"
-}
+```
+PATCH /api/v1/pending-apply-jobs/{jobId}
+Body: { "status": "applied" | "needs-human-review" | "skipped" | "error", "reason": "...", "appliedAt": "<ISO timestamp>" }
 ```
 
-3. Update session counters
+The API is the single source of truth — no local files needed.
 
 ---
 
 ### Step 4: Session Complete
 
-#### 4.1 Finalize Session
-
-Update session in applied.json:
-
-```json
-{
-  "id": "session-20260228-100000",
-  "startedAt": "2026-02-28T10:00:00Z",
-  "endedAt": "2026-02-28T10:30:00Z",
-  "mode": "apply",
-  "total": 5,
-  "successful": 4,
-  "needsReview": 1,
-  "skipped": 0
-}
-```
-
-#### 4.2 Display Summary
+#### 4.1 Display Summary
 
 ```
 ╔═══════════════════════════════════════════════════════════════╗
@@ -230,7 +177,7 @@ Update session in applied.json:
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-#### 4.3 Suggest Next Steps
+#### 4.2 Suggest Next Steps
 
 Use `AskUserQuestion`:
 - **Run another batch** → Check for more pending jobs
@@ -264,46 +211,8 @@ If LinkedIn shows "You've reached the limit":
 
 ---
 
-## Session Logging
-
-Throughout the session, log significant actions to `data/logs.json`:
-
-```json
-{
-  "timestamp": "2026-02-28T10:05:00Z",
-  "action": "Starting application for Frontend Engineer at Company A",
-  "reason": "Job matches persona criteria",
-  "result": null,
-  "type": "info"
-}
-```
-
-**Log these events**:
-- Starting application for a job (type: info)
-- Filling each form field with reasoning (type: info)
-- Skipping a job and why (type: warning)
-- Successfully submitting application (type: success)
-- Errors or issues encountered (type: error)
-- Using assumed answers (type: warning)
-
-**At session end**, update with summary:
-```json
-{
-  "summary": {
-    "totalApplications": 5,
-    "successful": 4,
-    "needsReview": 1,
-    "skipped": 0
-  }
-}
-```
-
----
-
 ## Notes
 
 - YOLO mode is meant for high-confidence matches
 - Always respect LinkedIn's rate limits
 - Jobs marked needs-review should be manually applied
-- Knowledge.json is updated with new Q&A during applications
-- Logs.json tracks detailed session activity for debugging

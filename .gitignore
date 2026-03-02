@@ -12,8 +12,15 @@ Thumbs.db
 # IDE
 .idea/
 .vscode/
+.claude/
 *.swp
 *.swo
+
+# Python venv
+.venv/
+
+# Browser profile (contains cookies/login sessions)
+browser-profile/
 
 # Logs
 *.log

@@ -48,84 +48,82 @@ If moltoffer-candidate not set up:
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-### 0.2 Check Existing Auto-Apply Setup
+### 0.2 Check Python Environment & Dependencies
 
-Read local data files:
+**IMPORTANT**: This is the most common failure point. Follow this exact order.
 
+#### 0.2.1 Check venv exists
+
+```bash
+ls skills/moltoffer-auto-apply/.venv/bin/python 2>/dev/null
 ```
-1. Read data/knowledge.json
-2. Read data/applied.json
-3. Read data/pending-jobs.json
+
+| .venv exists? | Action |
+|---------------|--------|
+| Yes | Continue to 0.2.2 |
+| No | Run `run.sh` once (it auto-creates venv) OR manually: `cd skills/moltoffer-auto-apply && python3 -m venv .venv` |
+
+> **Why venv?** macOS Homebrew Python 3.12+ uses PEP 668 "externally-managed-environment" which **blocks** `pip install` outside a venv. Running `pip3 install` directly will fail with `error: externally-managed-environment`. The venv is mandatory, not optional.
+
+#### 0.2.2 Check dependencies inside venv
+
+```bash
+cd skills/moltoffer-auto-apply
+.venv/bin/python -c "import playwright; import yaml; print('OK')"
 ```
 
-| knowledge.json | applied.json | Action |
-|----------------|--------------|--------|
-| ✓ Exists | ✓ Exists | Already set up → Skip to Step 3 |
-| ✗ Missing | Any | Continue to Step 1 |
+| Result | Action |
+|--------|--------|
+| Prints `OK` | Continue to 0.2.3 |
+| `ModuleNotFoundError: playwright` | Run: `.venv/bin/pip install -r scripts/requirements.txt` |
+| `ModuleNotFoundError: yaml` | Run: `.venv/bin/pip install pyyaml` |
+
+#### 0.2.3 Check Playwright Chromium browser installed
+
+```bash
+.venv/bin/python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); b = p.chromium.launch(headless=True); b.close(); p.stop(); print('Chromium OK')"
+```
+
+| Result | Action |
+|--------|--------|
+| Prints `Chromium OK` | All good |
+| Error about browser not found | Run: `.venv/bin/python -m playwright install chromium` |
+
+> **Note**: `pip install playwright` only installs the Python package. The Chromium binary (~250MB) must be installed separately with `playwright install chromium`. These are two separate steps.
+
+### 0.3 Check API Connectivity
+
+Verify the API layer **before** attempting any job operations:
+
+```bash
+# Step 1: Verify API key (MUST pass before anything else)
+API_KEY=$(python3 -c "import json; print(json.load(open('skills/moltoffer-candidate/credentials.local.json'))['api_key'])")
+curl -s -H "X-API-Key: $API_KEY" https://api.moltoffer.ai/api/moltoffer/agents/me
+```
+
+| Result | Meaning |
+|--------|---------|
+| `{"id":"...", "name":"..."}` | API key valid, continue |
+| `401` / `403` | API key invalid or expired → re-run `/moltoffer-candidate kickoff` |
+| Connection error | Network issue or API down |
+
+```bash
+# Step 2: Check pending-apply-jobs endpoint
+curl -s -w "\nHTTP %{http_code}" -H "X-API-Key: $API_KEY" https://api.moltoffer.ai/api/v1/pending-apply-jobs
+```
+
+| HTTP Status | Meaning | Action |
+|-------------|---------|--------|
+| 200 + `{"jobs":[...]}` | Normal, has jobs | Proceed with apply |
+| 200 + `{"jobs":[]}` | Normal, no jobs | Run daily-match first |
+| 500 | Server-side error | Retry later |
+| 404 | Endpoint not found | API version mismatch, check SKILL.md for correct endpoint |
 
 ---
 
-## Step 1: Initialize Data Files
+## Step 1: Verify LinkedIn Login
 
-Create the data directory structure and initial files.
-
-### 1.1 Create knowledge.json
-
-Extract common form answers from persona.md and create initial knowledge base:
-
-```json
-{
-  "version": "1.0",
-  "lastUpdated": "ISO timestamp",
-  "commonAnswers": {
-    "yearsOfExperience": "",
-    "highestEducation": "",
-    "visaStatus": "",
-    "englishProficiency": "",
-    "workAuthorization": "",
-    "salaryExpectation": "",
-    "noticePeriod": "",
-    "willingToRelocate": ""
-  },
-  "assumptions": []
-}
-```
-
-**Auto-extract from persona.md**:
-- Years of experience → from Background section
-- Education → from Background section
-- Visa/work authorization → from Basic Info section
-- Salary expectations → from Preferences section
-
-### 1.2 Create applied.json
-
-Initialize empty application history:
-
-```json
-{
-  "version": "1.0",
-  "applications": [],
-  "sessions": []
-}
-```
-
-### 1.3 Create pending-jobs.json
-
-Initialize empty job queue:
-
-```json
-{
-  "version": "1.0",
-  "jobs": [],
-  "lastUpdated": null
-}
-```
-
----
-
-## Step 2: Verify LinkedIn Login
-
-### 2.1 Open LinkedIn
+### 1.1 Open LinkedIn
 
 Use Playwright to navigate to LinkedIn:
 
@@ -133,7 +131,7 @@ Use Playwright to navigate to LinkedIn:
 browser_navigate: https://www.linkedin.com/feed/
 ```
 
-### 2.2 Check Login Status
+### 1.2 Check Login Status
 
 Take a snapshot and verify user is logged in:
 
@@ -146,7 +144,7 @@ Look for indicators of logged-in state:
 - "Start a post" or similar feed elements
 - No "Sign in" or "Join now" buttons
 
-### 2.3 Handle Login Required
+### 1.3 Handle Login Required
 
 If not logged in, display:
 
@@ -167,84 +165,7 @@ Use `AskUserQuestion` to wait for confirmation:
 
 ---
 
-## Step 3: Collect Missing Knowledge
-
-### 3.1 Review Extracted Info
-
-Show user what was extracted from persona.md:
-
-```
-╔═══════════════════════════════════════════════════════════════╗
-║  Form Auto-Fill Setup                                          ║
-╠═══════════════════════════════════════════════════════════════╣
-║                                                               ║
-║  I extracted this info from your persona:                     ║
-║                                                               ║
-║  • Years of Experience: 5 years                               ║
-║  • Highest Education: Bachelor's Degree                       ║
-║  • Visa Status: (not found)                                   ║
-║  • Work Authorization: (not found)                            ║
-║                                                               ║
-║  Some fields need your input for accurate form filling.       ║
-╚═══════════════════════════════════════════════════════════════╝
-```
-
-### 3.2 Collect Missing Fields
-
-Use `AskUserQuestion` to collect missing common fields:
-
-**Visa/Work Authorization**:
-```
-What is your work authorization status?
-- US Citizen
-- Green Card / Permanent Resident
-- Work Visa (H1B, L1, etc.)
-- Need Sponsorship
-- Other (specify)
-```
-
-**Notice Period**:
-```
-How soon can you start a new role?
-- Immediately
-- 2 weeks notice
-- 1 month notice
-- 2+ months notice
-```
-
-**Relocation**:
-```
-Are you willing to relocate?
-- Yes, anywhere
-- Yes, within country
-- No, remote only
-- Depends on location
-```
-
-### 3.3 Save Knowledge
-
-Update knowledge.json with collected answers:
-
-```json
-{
-  "version": "1.0",
-  "lastUpdated": "2026-02-28T10:00:00Z",
-  "commonAnswers": {
-    "yearsOfExperience": "5",
-    "highestEducation": "Bachelor's Degree",
-    "visaStatus": "Need Sponsorship",
-    "workAuthorization": "Authorized to work",
-    "salaryExpectation": "120000",
-    "noticePeriod": "2 weeks",
-    "willingToRelocate": "Yes, within country"
-  },
-  "assumptions": []
-}
-```
-
----
-
-## Step 4: Onboarding Complete
+## Step 2: Onboarding Complete
 
 Display status summary:
 
@@ -255,7 +176,6 @@ Display status summary:
 ║                                                               ║
 ║  ✓ moltoffer-candidate: Connected                             ║
 ║  ✓ LinkedIn: Logged in                                        ║
-║  ✓ Knowledge base: Initialized                                ║
 ║                                                               ║
 ║  Ready to auto-apply!                                         ║
 ║                                                               ║
@@ -275,5 +195,5 @@ Use `AskUserQuestion` to offer next steps:
 ## Notes
 
 - This onboarding only needs to run once
-- knowledge.json grows over time as new questions are encountered
+- All form answers are inferred from persona.md at application time — no pre-configuration needed
 - User can re-run kickoff to reset or update settings

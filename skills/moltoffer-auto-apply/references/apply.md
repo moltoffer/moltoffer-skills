@@ -28,7 +28,7 @@ Detailed Playwright automation for applying to a single LinkedIn Easy Apply job.
     {
       "question": "Years of React experience",
       "answer": "5",
-      "source": "knowledge" | "inferred" | "default"
+      "source": "inferred" | "default"
     }
   ]
 }
@@ -46,10 +46,9 @@ For each action you take, provide a brief explanation of:
 - **What information or rule** you are following
 
 Examples:
-- "Filling 'Yes' for work authorization field because knowledge.json shows no sponsorship required"
+- "Filling 'No' for visa sponsorship field because persona.md shows Chinese citizen needing sponsorship"
 - "Skipping this job because it requires external application"
-- "Selecting 'Male' for gender because knowledge.json has this answer recorded"
-- "Filling email as 'john@example.com' from persona.md"
+- "Filling email as 'john@example.com' from persona.md Basic Info"
 
 ### 2. Minimize Operations
 
@@ -57,70 +56,24 @@ Reduce the number of snapshot calls. When you see all input fields visible, fill
 
 ### 3. Information Processing Priority
 
-1. **Prioritize** reading from `../moltoffer-candidate/persona.md` for personal/resume information
-2. **Use** `data/knowledge.json` for pre-answered questions and form field mappings
-3. **Infer** reasonable assumptions when information is missing
-4. **CRITICAL**: Every time you fill in an assumed answer, **immediately record it** to `data/knowledge.json`
+1. **Prioritize** reading from `../moltoffer-candidate/persona.md` for all personal/resume information
+2. **Infer** reasonable assumptions when information is not explicitly in persona.md
+3. **Cannot determine** → Mark job as needs-human-review
 
-Record format:
-```json
-{
-  "question": "Original question text",
-  "assumedAnswer": "The assumed answer",
-  "reasoning": "Why you made this assumption",
-  "timestamp": "ISO 8601 timestamp"
+### 4. Update Status via API
+
+After completing each application, **immediately** call:
+
+```
+PATCH /api/v1/pending-apply-jobs/{jobId}
+Body: {
+  "status": "applied" | "needs-human-review" | "error",
+  "reason": "Success" | "External application required" | "...",
+  "appliedAt": "<ISO 8601 timestamp>"
 }
 ```
 
-Examples of when to record:
-- "How many years of Selenium experience?" → Record if not in persona.md or knowledge.json
-- "Years of JSON experience?" → Record if not explicitly stated
-- Any technology-specific years of experience questions
-- Any question where you estimate or infer the answer
-
-### 4. Application Records
-
-After completing each application, **immediately** record to `data/applied.json`:
-
-```json
-{
-  "company": "Company name",
-  "jobTitle": "Job title",
-  "jobId": "MoltOffer job ID",
-  "postedTime": "Job posting time (ISO 8601, calculated from relative time)",
-  "applicationTime": "Application time (ISO 8601, precise to second)",
-  "status": "applied" | "needs-human-review",
-  "link": "LinkedIn job URL",
-  "session": "session-id"
-}
-```
-
-**Important**:
-- `applicationTime` must use the **actual timestamp** when the application is completed
-- `postedTime` must be calculated from relative time (e.g., "7 hours ago" → actual timestamp)
-- Always preserve the `link` field for tracking
-
-### 5. Session Logging
-
-Log significant actions to `data/logs.json`:
-
-```json
-{
-  "timestamp": "ISO timestamp",
-  "action": "Brief action description",
-  "reason": "Why this action was taken",
-  "result": "Outcome of the action",
-  "type": "info" | "success" | "warning" | "error"
-}
-```
-
-Log these events:
-- Starting application for a job (type: info)
-- Filling each form field with reasoning (type: info)
-- Skipping a job and why (type: warning)
-- Successfully submitting application (type: success)
-- Errors or issues encountered (type: error)
-- Using assumed answers (type: warning)
+The API is the single source of truth. Do **not** write to local files.
 
 ---
 
@@ -293,26 +246,25 @@ browser_file_upload(
 
 For each question, determine the answer using this priority:
 
-1. **Direct match in knowledge.json** → Use stored answer
-2. **Inference from persona.md** → Infer and **immediately log** to knowledge.json
-3. **Common defaults** → Use sensible defaults
-4. **Cannot determine** → Mark for human review
+1. **Inference from persona.md** → Read relevant sections and infer
+2. **Common defaults** → Use sensible defaults
+3. **Cannot determine** → Mark for human review
 
 #### 6.1 Common Question Mappings
 
-| Question Pattern | Knowledge Key | Persona Source |
-|------------------|---------------|----------------|
-| "years of experience" | yearsOfExperience | Background section |
-| "highest education" | highestEducation | Background section |
-| "work authorization" | workAuthorization | Basic Info |
-| "visa sponsorship" | visaStatus | Basic Info |
-| "salary expectation" | salaryExpectation | Preferences |
-| "notice period" | noticePeriod | Preferences |
-| "willing to relocate" | willingToRelocate | Preferences |
-| "first name" | - | Basic Info |
-| "last name" | - | Basic Info |
-| "email" | - | Basic Info |
-| "phone" | - | Basic Info |
+| Question Pattern | Persona Source |
+|------------------|----------------|
+| "years of experience" | Background section |
+| "highest education" | Background section |
+| "work authorization" | Basic Info (nationality) |
+| "visa sponsorship" | Basic Info (nationality) |
+| "salary expectation" | Preferences section |
+| "notice period" | Preferences section |
+| "willing to relocate" | Preferences section |
+| "first name" | Basic Info |
+| "last name" | Basic Info |
+| "email" | Basic Info |
+| "phone" | Basic Info |
 
 #### 6.2 Inference Rules
 
@@ -322,16 +274,6 @@ For skill-specific questions like "Years of Python experience":
 2. If skill mentioned with years → use that
 3. If skill mentioned without years → use 2 (conservative)
 4. If skill not mentioned → use 0
-
-**CRITICAL**: Log every inference to knowledge.json:
-```json
-{
-  "question": "Years of Python experience",
-  "assumedAnswer": "2",
-  "reasoning": "Python mentioned in skills without specific years",
-  "timestamp": "2026-02-28T10:05:00Z"
-}
-```
 
 #### 6.3 Default Values
 
@@ -493,9 +435,8 @@ If form shows validation errors:
 ### Unexpected Questions
 
 If encounter a question with no clear answer:
-1. Log the question to knowledge.json with best-effort answer
-2. Use reasonable default
-3. Flag in return for user awareness
+1. Use reasonable default
+2. Flag in return for user awareness
 
 ### Modal Closes Unexpectedly
 
@@ -545,7 +486,7 @@ If any step takes >30 seconds:
     # Reason: 5 years total experience from persona.md Background
 
 12. browser_click(ref="radio-yes", element="Yes, authorized to work")
-    # Reason: knowledge.json shows workAuthorization="Authorized"
+    # Reason: persona.md Basic Info shows work authorization status
 
 13. browser_click(ref="next-btn")
 14. browser_wait_for(time=1)
@@ -560,8 +501,5 @@ If any step takes >30 seconds:
 18. browser_press_key(key="Escape")
     # Reason: Using ESC for fast modal close
 
-19. # Update applied.json with application record
-20. # Update logs.json with session entry
-
-21. return { status: "applied", reason: "Success" }
+19. return { status: "applied", reason: "Success" }
 ```
