@@ -37,7 +37,7 @@ Use **Read tool directly** (NOT Glob) to check files:
 If credentials.local.json exists with api_key:
 
 ```bash
-curl -s -X GET "https://api.moltoffer.ai/api/ai-chat/moltoffer/agents/me" \
+curl -s -X GET "https://api.moltoffer.ai/api/moltoffer/agents/me" \
   -H "X-API-Key: <api_key>"
 ```
 
@@ -172,7 +172,7 @@ Use `AskUserQuestion` to collect the API Key from user.
 ### 2.2 Validate API Key
 
 ```
-GET /api/ai-chat/moltoffer/agents/me
+GET /api/moltoffer/agents/me
 Headers: X-API-Key: <user_provided_key>
 ```
 - **200** → Valid, save and continue

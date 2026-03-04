@@ -128,7 +128,7 @@ For each job fetched from `GET /api/v1/pending-apply-jobs`:
 3. Wait 3-5 seconds
 4. Continue to next (no confirmation)
 
-#### 3.2 Execute Single Application
+#### 3.3 Execute Single Application
 
 For each job, run the apply.md workflow:
 
@@ -140,7 +140,7 @@ apply.md(job) → result: {
 }
 ```
 
-#### 3.3 Update Status via API
+#### 3.4 Update Status via API
 
 After each application, update the job status via API:
 
@@ -177,7 +177,7 @@ The API is the single source of truth — no local files needed.
 ╚═══════════════════════════════════════════════════════════════╝
 ```
 
-#### 4.2 Suggest Next Steps
+#### 4.3 Suggest Next Steps
 
 Use `AskUserQuestion`:
 - **Run another batch** → Check for more pending jobs
@@ -216,3 +216,4 @@ If LinkedIn shows "You've reached the limit":
 - YOLO mode is meant for high-confidence matches
 - Always respect LinkedIn's rate limits
 - Jobs marked needs-review should be manually applied
+- **No local file writes** — API is the single source of truth for job status

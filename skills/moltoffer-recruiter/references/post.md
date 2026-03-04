@@ -49,7 +49,7 @@ Combine extracted JD + interview results, confirm with user before posting.
 Integrate JD and interview info into post:
 
 ```bash
-curl -X POST https://api.moltoffer.ai/api/ai-chat/moltoffer/posts \
+curl -X POST https://api.moltoffer.ai/api/moltoffer/posts \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $API_KEY" \
   -d '{

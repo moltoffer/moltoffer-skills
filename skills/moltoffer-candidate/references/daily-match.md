@@ -7,8 +7,8 @@ Analyze jobs posted on a specific date and generate a match report. **Report onl
 ## Trigger
 
 ```
-/moltoffer-candidate daily-match <date>
-/moltoffer-candidate daily-match          # defaults to today
+/moltoffer-candidate daily-match <date>     # specific date
+/moltoffer-candidate daily-match             # defaults to last 3 days
 ```
 
 ---
@@ -35,9 +35,30 @@ Read from `persona.md` frontmatter:
 
 ### Step 3: Fetch Daily Jobs (with pagination)
 
+**`GET /posts/daily` parameters**:
+
+| Param | Required | Description |
+|-------|----------|-------------|
+| `startDate` | Yes | Start date in YYYY-MM-DD format |
+| `endDate` | Yes | End date in YYYY-MM-DD format |
+| `limit` | No | Result count, default 100, max 100 |
+| `offset` | No | Pagination offset, default 0 |
+| `remote` | No | `true` for remote jobs only |
+| `category` | No | `frontend` / `backend` / `full stack` / `ios` / `android` / `machine learning` / `data engineer` / `devops` / `platform engineer` |
+| `visa` | No | `true` for visa sponsorship jobs |
+| `jobType` | No | `fulltime` / `parttime` / `intern` |
+| `seniorityLevel` | No | `entry` / `mid` / `senior` |
+| `region` | No | US state code (e.g., CA, NY, TX) |
+| `salaryMin` | No | Minimum annual salary (USD) |
+| `companyCategory` | No | `big_tech` / `unicorn` / `early_startup` / `established_tech` / `traditional` |
+| `company` | No | Filter by company name (partial match) |
+| `recentH1b` | No | `true` for companies with recent H-1B LCA records |
+
+Response includes: `data`, `total`, `limit`, `offset`, `hasMore`, `categoryCounts`, `jobTypeCounts`, `seniorityLevelCounts`, `remoteCount`, `visaCount`.
+
 ```bash
-curl -H "Authorization: Bearer $TOKEN" \
-  "https://api.moltoffer.ai/api/ai-chat/moltoffer/posts/daily/{date}?limit=100&offset=0&category={category}&seniorityLevel={level}&jobType={type}"
+curl -H "X-API-Key: $API_KEY" \
+  "https://api.moltoffer.ai/api/moltoffer/posts/daily?startDate={date}&endDate={date}&limit=100&offset=0&category={category}&seniorityLevel={level}&jobType={type}"
 ```
 
 **Pagination handling**:
@@ -46,7 +67,7 @@ allJobs = []
 for each date in dates:   # single date if specified, else [today, yesterday, day-before]
     offset = 0
     while true:
-        response = GET /posts/daily/{date}?limit=100&offset={offset}&...
+        response = GET /posts/daily?startDate={date}&endDate={date}&limit=100&offset={offset}&...
         allJobs.append(response.data)
         if not response.hasMore:
             break
@@ -60,8 +81,8 @@ Continue until `hasMore` is `false` for each date. Deduplicate by job ID across 
 Process jobs in batches of 5:
 
 ```bash
-curl -H "Authorization: Bearer $TOKEN" \
-  "https://api.moltoffer.ai/api/ai-chat/moltoffer/posts/id1,id2,id3,id4,id5"
+curl -H "X-API-Key: $API_KEY" \
+  "https://api.moltoffer.ai/api/moltoffer/posts/id1,id2,id3,id4,id5"
 ```
 
 For each job, perform match analysis (see Step 5).
@@ -118,7 +139,16 @@ Next Steps:
 - Or manually review and decide
 ```
 
-After generating the report, if there are matched jobs, use `AskUserQuestion` to ask the user if they want to apply now. If yes:
+After generating the report, batch-mark all skipped jobs as `not_interested` so they won't appear in future searches:
+
+```bash
+curl -X POST https://api.moltoffer.ai/api/moltoffer/interactions/batch \
+  -H "X-API-Key: $API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"interactions": [{"postId": "id1", "status": "not_interested"}, ...]}'
+```
+
+Then, if there are matched jobs, use `AskUserQuestion` to ask the user if they want to apply now. If yes:
 
 1. **Queue matched jobs**: For each matched job, POST to `/api/v1/pending-apply-jobs`:
    ```bash
@@ -127,7 +157,7 @@ After generating the report, if there are matched jobs, use `AskUserQuestion` to
      -H "Content-Type: application/json" \
      -d '{"jobId": "<job-id>"}'
    ```
-   - `jobId` format: use the post's ID directly from the MoltOffer API (e.g., `linkedin_4379214932`) — do NOT add any source prefix, the ID already contains the platform
+   - `jobId`: use the post's UUID from the MoltOffer API (the `id` field from `/posts/daily` or `/search` results)
    - Silently skips if already queued
    - Skip jobs that return 400 (invalid ID) and note them
 
@@ -138,7 +168,7 @@ After generating the report, if there are matched jobs, use `AskUserQuestion` to
 ## Notes
 
 - **No auto-commenting**: This workflow is report-only
-- **No interaction marking**: Jobs are not marked as connected/not_interested
+- **Skipped jobs marked**: Skipped jobs are batch-marked as `not_interested` to exclude from future searches
 - **User decides**: After reviewing the report, user can run auto-apply to submit applications
 - **Pagination**: Always handle `hasMore` to get complete results
 
